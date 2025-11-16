@@ -43,7 +43,15 @@ def clean_and_process_data(prices_df: pd.DataFrame, eps_df: pd.DataFrame) -> pd.
     eps_df['Date'] = pd.to_datetime(eps_df['Date'], format='%d-%m-%Y', errors='coerce')
     # Use raw string (r'...') to avoid SyntaxWarning
     eps_df['EPS'] = eps_df['EPS'].replace(r'[\$]', '', regex=True).astype(float)
-    eps_df = eps_df.dropna().sort_values(by='Date')
+    eps_df = eps_df.dropna()
+    
+    # --- FIX: Handle duplicate dates ---
+    # Sort by Date first to ensure we keep the latest entry if duplicates exist
+    eps_df = eps_df.sort_values(by='Date')
+    # Drop duplicate dates, keeping the last one
+    eps_df = eps_df.drop_duplicates(subset=['Date'], keep='last')
+    
+    # Now it's safe to set the index
     eps_df = eps_df.set_index('Date')
     
     # --- 2. Clean Price Data ---
@@ -52,7 +60,15 @@ def clean_and_process_data(prices_df: pd.DataFrame, eps_df: pd.DataFrame) -> pd.
     prices_df['Date'] = pd.to_datetime(prices_df['Date'], format='%d-%m-%Y', errors='coerce')
     # Use raw string (r'...') for regex
     prices_df['Price'] = prices_df['Price'].replace(r'[",]', '', regex=True).astype(float)
-    prices_df = prices_df.dropna().sort_values(by='Date')
+    prices_df = prices_df.dropna()
+    
+    # --- FIX: Handle duplicate dates ---
+    # Sort by Date first to ensure we keep the latest entry if duplicates exist
+    prices_df = prices_df.sort_values(by='Date')
+    # Drop duplicate dates, keeping the last one
+    prices_df = prices_df.drop_duplicates(subset=['Date'], keep='last')
+    
+    # Now it's safe to set the index
     prices_df = prices_df.set_index('Date')
 
     # --- 3. Process Data for Monthly P/E ---
@@ -70,6 +86,14 @@ def clean_and_process_data(prices_df: pd.DataFrame, eps_df: pd.DataFrame) -> pd.
     # method='ffill' (forward-fill) applies the last known
     # TTM EPS value to all subsequent months until a new one is reported.
     
+    # Ensure both indexes are unique before reindexing
+    if not prices_df.index.is_unique:
+        print("Error: Price index is still not unique after cleaning.")
+        return pd.DataFrame()
+    if not quarterly_ttm_eps.index.is_unique:
+        print("Error: TTM EPS index is not unique.")
+        return pd.DataFrame()
+
     ttm_eps_monthly = quarterly_ttm_eps.reindex(prices_df.index, method='ffill')
     
     # Now, create the combined DataFrame from the price data
@@ -90,8 +114,8 @@ def clean_and_process_data(prices_df: pd.DataFrame, eps_df: pd.DataFrame) -> pd.
     return final_df
 
 def main():
-    FILE_PATH = 'RelianceRaw.csv'
-    OUTPUT_PATH = 'monthly_pe_ratio_reliance.csv'
+    FILE_PATH = 'HDFCRaw.csv'
+    OUTPUT_PATH = 'monthly_pe_ratio_HDFC.csv'
     
     prices_df, eps_df = load_data(FILE_PATH)
     
@@ -102,7 +126,7 @@ def main():
     monthly_pe_df = clean_and_process_data(prices_df, eps_df)
     
     if monthly_pe_df.empty:
-        print("No data remained after processing. Check file format.")
+        print("No data remained after processing. Check file format or date alignment.")
     else:
         # Save the results to a new CSV
         monthly_pe_df.to_csv(OUTPUT_PATH)

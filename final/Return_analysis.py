@@ -90,7 +90,7 @@ def analyze_distribution(series: pd.Series, horizon_name: str):
     print("")
 
 def main():
-    FILE_PATH = 'monthly_pe_ratio_reliance.csv'
+    FILE_PATH = 'monthly_pe_ratio_HDFC.csv'
     
     df = load_and_clean_data(FILE_PATH)
     

@@ -89,7 +89,7 @@ def calculate_lyapunov_exponent(series: pd.Series) -> float:
         return np.nan
 
 def main():
-    FILE_PATH = 'monthly_pe_ratio_reliance.csv'
+    FILE_PATH = 'monthly_pe_ratio_HDFC.csv'
     
     df = load_data(FILE_PATH)
     if df.empty:

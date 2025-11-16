@@ -151,7 +151,7 @@ def analyze_transfer_entropy(df: pd.DataFrame, bins: int = 5):
         print(f"An error occurred: {e}")
 
 def main():
-    FILE_PATH = 'monthly_pe_ratio_reliance.csv'
+    FILE_PATH = 'monthly_pe_ratio_HDFC.csv'
     
     df = load_data(FILE_PATH)
     if df.empty:
